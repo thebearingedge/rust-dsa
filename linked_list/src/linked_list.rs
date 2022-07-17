@@ -10,7 +10,7 @@ pub struct LinkedList<T: Copy> {
 }
 
 impl<T: Copy> LinkedList<T> {
-    pub fn new<I>(values: I) -> LinkedList<T>
+    pub fn new<I>(values: I) -> Self
     where
         I: DoubleEndedIterator<Item = T>,
     {
@@ -19,6 +19,14 @@ impl<T: Copy> LinkedList<T> {
                 .rev()
                 .fold(None, |next, value| Some(Box::new(Node { value, next }))),
         }
+    }
+
+    pub fn append(&mut self, value: T) {
+        let mut next = &mut self.head;
+        while let Some(node) = next {
+            next = &mut node.next;
+        }
+        let _ = std::mem::replace(next, Some(Box::new(Node { value, next: None })));
     }
 }
 
