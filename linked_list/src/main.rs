@@ -1,22 +1,10 @@
-#[derive(Debug)]
-enum LinkedList<Data> {
-    Empty,
-    Node(Data, Box<LinkedList<Data>>),
-}
+mod linked_list;
 
-impl<D> LinkedList<D> {
-    fn new<I>(values: I) -> LinkedList<D>
-    where
-        I: DoubleEndedIterator<Item = D>,
-    {
-        values.rev().fold(LinkedList::Empty, |succ, val| {
-            LinkedList::Node(val, Box::new(succ))
-        })
-    }
-}
+use linked_list::LinkedList;
 
 fn main() {
-    let list = LinkedList::new(vec![1, 2, 3, 4, 5].into_iter());
-    println!("Hello, world!");
-    println!("{:?}", list);
+    let int_list = LinkedList::new([1, 2, 3, 4, 5].into_iter());
+    println!("integer list: {:?}", int_list);
+    let str_list = LinkedList::new(["let's", "learn", "rust"].into_iter());
+    println!("slice list: {:?}", str_list);
 }
