@@ -1,7 +1,13 @@
 #[derive(Debug)]
 struct Node<T> {
-    value: T,
+    data: T,
     next: Option<Box<Node<T>>>,
+}
+
+impl<T: Copy> Node<T> {
+    fn boxed(data: T, next: Option<Box<Node<T>>>) -> Box<Self> {
+        Box::new(Node { data, next })
+    }
 }
 
 #[derive(Debug)]
@@ -17,16 +23,20 @@ impl<T: Copy> LinkedList<T> {
         LinkedList {
             head: values
                 .rev()
-                .fold(None, |next, value| Some(Box::new(Node { value, next }))),
+                .fold(None, |next, data| Some(Node::boxed(data, next))),
         }
     }
 
-    pub fn append(&mut self, value: T) {
+    pub fn prepend(&mut self, data: T) {
+        self.head = Some(Node::boxed(data, self.head.take()));
+    }
+
+    pub fn append(&mut self, data: T) {
         let mut next = &mut self.head;
         while let Some(node) = next {
             next = &mut node.next;
         }
-        let _ = std::mem::replace(next, Some(Box::new(Node { value, next: None })));
+        next.replace(Node::boxed(data, None));
     }
 }
 
@@ -35,7 +45,7 @@ impl<T: Copy> Into<Vec<T>> for LinkedList<T> {
         let mut values = vec![];
         let mut next = self.head;
         while let Some(node) = next {
-            values.push(node.value);
+            values.push(node.data);
             next = node.next;
         }
         values
