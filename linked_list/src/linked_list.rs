@@ -90,7 +90,7 @@ mod tests {
         let empty: LinkedList<i32> = LinkedList::new(None);
         assert_eq!(empty, LinkedList::from([]));
         let non_empty = LinkedList::new(Some(42));
-        assert_eq!(non_empty, LinkedList::from([42]))
+        assert_eq!(non_empty, LinkedList::from([42]));
     }
 
     #[test]
@@ -105,5 +105,12 @@ mod tests {
         let mut list = LinkedList::from([1, 2, 3]);
         list.prepend(0);
         assert_eq!(list, LinkedList::from([0, 1, 2, 3]));
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut list = LinkedList::from([1, 2, 3]);
+        list.clear();
+        assert_eq!(list, LinkedList::from([]));
     }
 }
