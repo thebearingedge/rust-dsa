@@ -4,26 +4,24 @@ struct Node<T> {
     next: Option<Box<Node<T>>>,
 }
 
-impl<T: Copy> Node<T> {
+impl<T> Node<T> {
     fn boxed(data: T, next: Option<Box<Node<T>>>) -> Box<Self> {
         Box::new(Node { data, next })
     }
 }
 
 #[derive(Debug)]
-pub struct LinkedList<T: Copy> {
+pub struct LinkedList<T> {
     head: Option<Box<Node<T>>>,
 }
 
-impl<T: Copy> LinkedList<T> {
+impl<T> LinkedList<T> {
     pub fn new<I>(values: I) -> Self
     where
         I: DoubleEndedIterator<Item = T>,
     {
         LinkedList {
-            head: values
-                .rev()
-                .fold(None, |next, data| Some(Node::boxed(data, next))),
+            head: values.rfold(None, |next, data| Some(Node::boxed(data, next))),
         }
     }
 
@@ -38,16 +36,40 @@ impl<T: Copy> LinkedList<T> {
         }
         next.replace(Node::boxed(data, None));
     }
+
+    pub fn clear(&mut self) {
+        self.head.take();
+    }
 }
 
 impl<T: Copy> Into<Vec<T>> for LinkedList<T> {
     fn into(self) -> Vec<T> {
-        let mut values = vec![];
-        let mut next = self.head;
-        while let Some(node) = next {
-            values.push(node.data);
-            next = node.next;
+        self.into_iter().map(|value| *value).collect::<Vec<T>>()
+    }
+}
+
+pub struct LinkedListIter<'a, T>(Option<&'a Box<Node<T>>>);
+
+impl<'a, T> Iterator for LinkedListIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0 {
+            None => None,
+            Some(node) => {
+                self.0 = node.next.as_ref();
+                Some(&node.data)
+            }
         }
-        values
+    }
+}
+
+impl<'a, T> IntoIterator for &'a LinkedList<T> {
+    type Item = &'a T;
+
+    type IntoIter = LinkedListIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LinkedListIter(self.head.as_ref())
     }
 }
