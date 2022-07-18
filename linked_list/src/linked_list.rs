@@ -37,6 +37,15 @@ impl<T> LinkedList<T> {
     pub fn clear(&mut self) {
         self.head.take();
     }
+
+    pub fn tail(mut self) -> Self {
+        LinkedList {
+            head: match self.head.take() {
+                None => None,
+                Some(node) => node.next,
+            },
+        }
+    }
 }
 
 impl<T: Copy> Into<Vec<T>> for LinkedList<T> {
@@ -112,6 +121,13 @@ mod tests {
         let mut list = LinkedList::from([1, 2, 3]);
         list.clear();
         assert_eq!(list, LinkedList::from([]));
+    }
+
+    #[test]
+    fn test_drop() {
+        let list = LinkedList::from([1, 2, 3]);
+        let tail = list.tail();
+        assert_eq!(tail, LinkedList::from([2, 3]))
     }
 
     #[test]
