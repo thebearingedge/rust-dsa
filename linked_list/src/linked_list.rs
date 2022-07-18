@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Node<T> {
     data: T,
     next: Option<Box<Node<T>>>,
@@ -10,7 +10,7 @@ impl<T> Node<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LinkedList<T> {
     head: Option<Box<Node<T>>>,
 }
@@ -71,5 +71,22 @@ impl<'a, T> IntoIterator for &'a LinkedList<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         LinkedListIter(self.head.as_ref())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let _: LinkedList<i32> = LinkedList::new([].into_iter());
+    }
+
+    #[test]
+    fn test_append() {
+        let mut list = LinkedList::new([1, 2, 3].into_iter());
+        list.append(4);
+        assert_eq!(list, LinkedList::new([1, 2, 3, 4].into_iter()));
     }
 }
