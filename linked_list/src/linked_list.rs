@@ -113,4 +113,10 @@ mod tests {
         list.clear();
         assert_eq!(list, LinkedList::from([]));
     }
+
+    #[test]
+    fn test_into_vec() {
+        let vector: Vec<i32> = LinkedList::from([1, 2, 3]).into();
+        assert_eq!(vector, vec![1, 2, 3]);
+    }
 }
