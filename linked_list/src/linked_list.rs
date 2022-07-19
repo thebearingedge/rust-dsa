@@ -46,11 +46,16 @@ impl<T> LinkedList<T> {
             },
         }
     }
-}
 
-impl<T: Copy> Into<Vec<T>> for LinkedList<T> {
-    fn into(self) -> Vec<T> {
-        self.into_iter().map(|value| *value).collect::<Vec<T>>()
+    pub fn reverse(&mut self) {
+        let mut prev = None;
+        let mut curr = self.head.take();
+        while let Some(mut node) = curr.take() {
+            curr = node.next;
+            node.next = prev;
+            prev = Some(node);
+        }
+        self.head = prev;
     }
 }
 
@@ -131,8 +136,9 @@ mod tests {
     }
 
     #[test]
-    fn test_into_vec() {
-        let vector: Vec<i32> = LinkedList::from([1, 2, 3]).into();
-        assert_eq!(vector, vec![1, 2, 3]);
+    fn test_reverse() {
+        let mut list = LinkedList::from([1, 2, 3, 4, 5]);
+        list.reverse();
+        assert_eq!(list, LinkedList::from([5, 4, 3, 2, 1]))
     }
 }
