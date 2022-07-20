@@ -21,15 +21,15 @@ impl<T: Default> Stack<T> {
         items.into_boxed_slice()
     }
 
+    pub fn size(&self) -> usize {
+        self.depth
+    }
+
     pub fn peek(&self) -> Option<&T> {
         match self.depth {
             0 => None,
             _ => Some(&self.items[self.depth - 1]),
         }
-    }
-
-    pub fn size(&self) -> usize {
-        self.depth
     }
 
     pub fn push(&mut self, item: T) {
@@ -61,12 +61,12 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_new() {
-        let _: Stack<i32> = Stack::new(0);
+        let _ = Stack::<i32>::new(0);
     }
 
     #[test]
     fn test_push() {
-        let mut stack: Stack<i32> = Stack::new(1);
+        let mut stack = Stack::new(1);
         stack.push(41);
         stack.push(42);
         stack.push(43);
@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn test_pop() {
-        let mut stack: Stack<i32> = Stack::new(1);
+        let mut stack = Stack::new(1);
         assert_eq!(stack.size(), 0);
         assert_eq!(stack.pop(), None);
         stack.push(42);
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_peek() {
-        let mut stack: Stack<i32> = Stack::new(1);
+        let mut stack = Stack::new(1);
         assert_eq!(stack.peek(), None);
         stack.push(41);
         assert_eq!(stack.peek(), Some(&41));
