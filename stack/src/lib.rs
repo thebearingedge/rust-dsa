@@ -21,6 +21,14 @@ impl<T: Default> Stack<T> {
         items.into_boxed_slice()
     }
 
+    fn grow(&mut self) {
+        let mut items = Self::alloc(self.depth * 2);
+        for index in 0..self.depth {
+            std::mem::swap(&mut self.items[index], &mut items[index]);
+        }
+        self.items = items;
+    }
+
     pub fn size(&self) -> usize {
         self.depth
     }
@@ -34,11 +42,7 @@ impl<T: Default> Stack<T> {
 
     pub fn push(&mut self, item: T) {
         if self.depth == self.items.len() {
-            let mut items = Self::alloc(self.depth * 2);
-            for i in 0..self.depth {
-                std::mem::swap(&mut self.items[i], &mut items[i]);
-            }
-            self.items = items;
+            self.grow();
         }
         self.items[self.depth] = item;
         self.depth += 1;
