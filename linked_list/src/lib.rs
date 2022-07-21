@@ -98,6 +98,7 @@ impl<'a, T> IntoIterator for &'a LinkedList<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_new() {
