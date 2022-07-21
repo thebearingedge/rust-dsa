@@ -25,28 +25,31 @@ impl<T: Default + std::fmt::Debug> Queue<T> {
         ring.into_boxed_slice()
     }
 
+    fn grow(&mut self) {
+        let Self { next, last, .. } = *self;
+        let mut ring = Self::alloc(self.size * 2);
+        if last < next {
+            let range = (next..self.ring.len()).chain(0..=last);
+            for (new_index, old_index) in range.enumerate() {
+                std::mem::swap(&mut self.ring[old_index], &mut ring[new_index]);
+            }
+            self.next = 0;
+            self.last = self.size - 1;
+        } else {
+            for index in next..=last {
+                std::mem::swap(&mut self.ring[index], &mut ring[index]);
+            }
+        };
+        self.ring = ring;
+    }
+
     pub fn size(&self) -> usize {
         self.size
     }
 
     pub fn enqueue(&mut self, item: T) {
         if self.size == self.ring.len() {
-            let Self { next, last, .. } = *self;
-            let mut ring = Self::alloc(self.size * 2);
-            if last < next {
-                let range = (next..self.ring.len()).chain(0..=last);
-                for (new, old) in range.enumerate() {
-                    std::mem::swap(&mut self.ring[old], &mut ring[new]);
-                }
-                self.next = 0;
-                self.last = self.size - 1;
-            } else {
-                for i in next..=last {
-                    std::mem::swap(&mut self.ring[i], &mut ring[i]);
-                }
-            };
-            self.ring = ring;
-        } else {
+            self.grow();
         }
         self.last = (self.last + 1) % self.ring.len();
         self.ring[self.last] = item;
@@ -100,7 +103,6 @@ mod tests {
         assert_eq!(queue.dequeue(), None);
         queue.enqueue(41);
         queue.enqueue(42);
-        println!("{:#?}", queue);
         assert_eq!(queue.size(), 2);
         assert_eq!(queue.dequeue(), Some(41));
         assert_eq!(queue.size(), 1);
