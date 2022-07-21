@@ -6,7 +6,7 @@ pub struct Queue<T> {
     ring: Box<[T]>,
 }
 
-impl<T: Default + std::fmt::Debug> Queue<T> {
+impl<T: Default> Queue<T> {
     pub fn new(size: usize) -> Self {
         if size < 1 {
             panic!("Queue requires a size of at least 1 element.")
