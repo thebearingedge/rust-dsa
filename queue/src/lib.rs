@@ -29,8 +29,22 @@ impl<T: Default + std::fmt::Debug> Queue<T> {
         let Self { next, last, .. } = *self;
         let mut ring = Self::alloc(self.size * 2);
         if last < next {
-            let range = (next..self.ring.len()).chain(0..=last);
-            for (new_index, old_index) in range.enumerate() {
+            /*
+              0 1 2 3
+             |c|d|a|b|
+                ^ ^
+                | next
+                last
+
+             becomes...
+
+              0 1 2 3 4 5 6 7
+             |a|b|c|d| | | | |
+              ^     ^
+              next  last
+            */
+            let ranges = (next..self.ring.len()).chain(0..=last);
+            for (new_index, old_index) in ranges.enumerate() {
                 std::mem::swap(&mut self.ring[old_index], &mut ring[new_index]);
             }
             self.next = 0;

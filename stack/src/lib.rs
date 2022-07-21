@@ -33,13 +33,6 @@ impl<T: Default> Stack<T> {
         self.depth
     }
 
-    pub fn peek(&self) -> Option<&T> {
-        match self.depth {
-            0 => None,
-            _ => Some(&self.items[self.depth - 1]),
-        }
-    }
-
     pub fn push(&mut self, item: T) {
         if self.depth == self.items.len() {
             self.grow();
@@ -55,6 +48,13 @@ impl<T: Default> Stack<T> {
         self.depth -= 1;
         let item = std::mem::replace(&mut self.items[self.depth], T::default());
         Some(item)
+    }
+
+    pub fn peek(&self) -> Option<&T> {
+        match self.depth {
+            0 => None,
+            _ => Some(&self.items[self.depth - 1]),
+        }
     }
 }
 
