@@ -47,6 +47,13 @@ impl<T> LinkedList<T> {
         }
     }
 
+    pub fn drop(&mut self) {
+        self.head = match self.head.take() {
+            None => None,
+            Some(node) => node.next,
+        };
+    }
+
     pub fn reverse(&mut self) {
         let mut prev = None;
         let mut curr = self.head.take();
@@ -130,10 +137,17 @@ mod tests {
     }
 
     #[test]
-    fn test_drop() {
+    fn test_tail() {
         let list = LinkedList::from([1, 2, 3]);
         let tail = list.tail();
         assert_eq!(tail, LinkedList::from([2, 3]))
+    }
+
+    #[test]
+    fn test_drop() {
+        let mut list = LinkedList::from([1, 2, 3]);
+        list.drop();
+        assert_eq!(list, LinkedList::from([2, 3]))
     }
 
     #[test]
