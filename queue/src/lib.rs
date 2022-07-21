@@ -26,8 +26,14 @@ impl<T: Default + std::fmt::Debug> Queue<T> {
     }
 
     fn grow(&mut self) {
-        let Self { next, last, .. } = *self;
-        let mut ring = Self::alloc(self.size * 2);
+        let Self {
+            next,
+            last,
+            size,
+            ring: old_ring,
+            ..
+        } = self;
+        let mut new_ring = Self::alloc(*size * 2);
         if last < next {
             /*
               0 1 2 3
@@ -43,18 +49,18 @@ impl<T: Default + std::fmt::Debug> Queue<T> {
               ^     ^
               next  last
             */
-            let ranges = (next..self.ring.len()).chain(0..=last);
+            let ranges = (*next..*size).chain(0..=*last);
             for (new_index, old_index) in ranges.enumerate() {
-                std::mem::swap(&mut self.ring[old_index], &mut ring[new_index]);
+                std::mem::swap(&mut old_ring[old_index], &mut new_ring[new_index]);
             }
             self.next = 0;
-            self.last = self.size - 1;
+            self.last = *size - 1;
         } else {
-            for index in next..=last {
-                std::mem::swap(&mut self.ring[index], &mut ring[index]);
+            for index in *next..=*last {
+                std::mem::swap(&mut old_ring[index], &mut new_ring[index]);
             }
         };
-        self.ring = ring;
+        self.ring = new_ring;
     }
 
     pub fn size(&self) -> usize {
