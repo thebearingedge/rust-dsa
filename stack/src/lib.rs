@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub struct Stack<T> {
-    depth: usize,
+    size: usize,
     items: Box<[T]>,
 }
 
@@ -10,7 +10,7 @@ impl<T: Default> Stack<T> {
             panic!("Stack requires a size of at least 1 element.")
         }
         Stack {
-            depth: 0,
+            size: 0,
             items: Self::alloc(size),
         }
     }
@@ -22,38 +22,38 @@ impl<T: Default> Stack<T> {
     }
 
     fn grow(&mut self) {
-        let mut items = Self::alloc(self.depth * 2);
-        for index in 0..self.depth {
+        let mut items = Self::alloc(self.size * 2);
+        for index in 0..self.size {
             std::mem::swap(&mut self.items[index], &mut items[index]);
         }
         self.items = items;
     }
 
     pub fn size(&self) -> usize {
-        self.depth
+        self.size
     }
 
     pub fn push(&mut self, item: T) {
-        if self.depth == self.items.len() {
+        if self.size == self.items.len() {
             self.grow();
         }
-        self.items[self.depth] = item;
-        self.depth += 1;
+        self.items[self.size] = item;
+        self.size += 1;
     }
 
     pub fn pop(&mut self) -> Option<T> {
-        if self.depth == 0 {
+        if self.size == 0 {
             return None;
         }
-        self.depth -= 1;
-        let item = std::mem::replace(&mut self.items[self.depth], T::default());
+        self.size -= 1;
+        let item = std::mem::replace(&mut self.items[self.size], T::default());
         Some(item)
     }
 
     pub fn peek(&self) -> Option<&T> {
-        match self.depth {
+        match self.size {
             0 => None,
-            _ => Some(&self.items[self.depth - 1]),
+            _ => Some(&self.items[self.size - 1]),
         }
     }
 }
