@@ -27,7 +27,7 @@ impl<T: Default> Stack<T> {
         for index in 0..self.size {
             std::mem::swap(&mut self.items[index], &mut items[index]);
         }
-        self.items = items;
+        let _ = std::mem::replace(&mut self.items, items);
     }
 
     pub fn size(&self) -> usize {

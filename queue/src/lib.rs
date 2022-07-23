@@ -61,7 +61,7 @@ impl<T: Default> Queue<T> {
                 std::mem::swap(&mut old_ring[index], &mut new_ring[index]);
             }
         };
-        self.ring = new_ring;
+        let _ = std::mem::replace(&mut self.ring, new_ring);
     }
 
     pub fn size(&self) -> usize {
