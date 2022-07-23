@@ -16,9 +16,10 @@ impl<T: Default> Stack<T> {
     }
 
     fn alloc(size: usize) -> Box<[T]> {
-        let mut items = Vec::<T>::with_capacity(size);
-        items.resize_with(size, T::default);
-        items.into_boxed_slice()
+        let layout = std::alloc::Layout::array::<T>(size).unwrap();
+        let start = unsafe { std::alloc::alloc(layout) as *mut T };
+        let slice = std::ptr::slice_from_raw_parts_mut(start, size);
+        unsafe { Box::from_raw(slice) }
     }
 
     fn grow(&mut self) {

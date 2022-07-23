@@ -20,9 +20,10 @@ impl<T: Default> Queue<T> {
     }
 
     fn alloc(size: usize) -> Box<[T]> {
-        let mut ring = Vec::<T>::with_capacity(size);
-        ring.resize_with(size, T::default);
-        ring.into_boxed_slice()
+        let layout = std::alloc::Layout::array::<T>(size).unwrap();
+        let start = unsafe { std::alloc::alloc(layout) as *mut T };
+        let slice = core::ptr::slice_from_raw_parts_mut(start, size);
+        unsafe { Box::from_raw(slice) }
     }
 
     fn grow(&mut self) {
