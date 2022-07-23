@@ -6,7 +6,7 @@ pub struct Queue<T> {
     ring: Box<[T]>,
 }
 
-impl<T: Default> Queue<T> {
+impl<T> Queue<T> {
     pub fn new(size: usize) -> Self {
         if size < 1 {
             panic!("Queue requires a size of at least 1 element.")
@@ -81,7 +81,8 @@ impl<T: Default> Queue<T> {
         if self.size == 0 {
             return None;
         }
-        let item = std::mem::replace(&mut self.ring[self.next], T::default());
+        let null = unsafe { std::mem::MaybeUninit::<T>::uninit().assume_init() };
+        let item = std::mem::replace(&mut self.ring[self.next], null);
         self.next = (self.next + 1) % self.ring.len();
         self.size -= 1;
         Some(item)
