@@ -6,10 +6,8 @@ pub struct Stack<T> {
 
 impl<T> Stack<T> {
     pub fn new(size: usize) -> Self {
-        if size < 1 {
-            panic!("Stack requires a size of at least 1 element.")
-        }
-        Stack {
+        assert_ne!(size, 0, "Stack requires a size of at least 1 element.");
+        Self {
             size: 0,
             items: Self::alloc(size),
         }

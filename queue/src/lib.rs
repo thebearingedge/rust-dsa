@@ -8,10 +8,8 @@ pub struct Queue<T> {
 
 impl<T> Queue<T> {
     pub fn new(size: usize) -> Self {
-        if size < 1 {
-            panic!("Queue requires a size of at least 1 element.")
-        }
-        Queue {
+        assert_ne!(size, 0, "Queue requires a size of at least 1 element.");
+        Self {
             next: 0,
             last: 0,
             size: 0,
