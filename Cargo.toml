@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "stack",
+    "queue",
+    "linked_list",
+    "vector",
+    "buffer"
+]
