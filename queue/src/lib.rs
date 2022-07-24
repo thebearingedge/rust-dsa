@@ -3,7 +3,7 @@ pub struct Queue<T> {
     next: usize,
     last: usize,
     size: usize,
-    ring: Box<[T]>,
+    buf: Box<[T]>,
 }
 
 impl<T> Queue<T> {
@@ -13,7 +13,7 @@ impl<T> Queue<T> {
             next: 0,
             last: 0,
             size: 0,
-            ring: Self::alloc(size),
+            buf: Self::alloc(size),
         }
     }
 
@@ -29,10 +29,10 @@ impl<T> Queue<T> {
             next,
             last,
             size,
-            ring: old_ring,
+            buf: old_buf,
             ..
         } = self;
-        let mut new_ring = Self::alloc(*size * 2);
+        let mut new_buf = Self::alloc(*size * 2);
         if last < next {
             /*
               0 1 2 3
@@ -50,16 +50,16 @@ impl<T> Queue<T> {
             */
             let ranges = (*next..*size).chain(0..=*last);
             for (new_index, old_index) in ranges.enumerate() {
-                std::mem::swap(&mut old_ring[old_index], &mut new_ring[new_index]);
+                std::mem::swap(&mut old_buf[old_index], &mut new_buf[new_index]);
             }
             self.next = 0;
             self.last = *size - 1;
         } else {
             for index in *next..=*last {
-                std::mem::swap(&mut old_ring[index], &mut new_ring[index]);
+                std::mem::swap(&mut old_buf[index], &mut new_buf[index]);
             }
         };
-        let _ = std::mem::replace(&mut self.ring, new_ring);
+        let _ = std::mem::replace(&mut self.buf, new_buf);
     }
 
     pub fn size(&self) -> usize {
@@ -67,11 +67,11 @@ impl<T> Queue<T> {
     }
 
     pub fn enqueue(&mut self, item: T) {
-        if self.size == self.ring.len() {
+        if self.size == self.buf.len() {
             self.grow();
         }
-        self.last = (self.last + 1) % self.ring.len();
-        self.ring[self.last] = item;
+        self.last = (self.last + 1) % self.buf.len();
+        self.buf[self.last] = item;
         self.size += 1;
     }
 
@@ -80,8 +80,8 @@ impl<T> Queue<T> {
             return None;
         }
         let null = unsafe { std::mem::MaybeUninit::<T>::uninit().assume_init() };
-        let item = std::mem::replace(&mut self.ring[self.next], null);
-        self.next = (self.next + 1) % self.ring.len();
+        let item = std::mem::replace(&mut self.buf[self.next], null);
+        self.next = (self.next + 1) % self.buf.len();
         self.size -= 1;
         Some(item)
     }
@@ -89,7 +89,7 @@ impl<T> Queue<T> {
     pub fn peek(&self) -> Option<&T> {
         match self.size {
             0 => None,
-            _ => Some(&self.ring[self.next]),
+            _ => Some(&self.buf[self.next]),
         }
     }
 }

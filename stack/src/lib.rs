@@ -1,7 +1,7 @@
 #[derive(Debug, PartialEq)]
 pub struct Stack<T> {
     size: usize,
-    items: Box<[T]>,
+    buf: Box<[T]>,
 }
 
 impl<T> Stack<T> {
@@ -9,7 +9,7 @@ impl<T> Stack<T> {
         assert_ne!(size, 0, "Stack requires a size of at least 1 element.");
         Self {
             size: 0,
-            items: Self::alloc(size),
+            buf: Self::alloc(size),
         }
     }
 
@@ -23,9 +23,9 @@ impl<T> Stack<T> {
     fn grow(&mut self) {
         let mut items = Self::alloc(self.size * 2);
         for index in 0..self.size {
-            std::mem::swap(&mut self.items[index], &mut items[index]);
+            std::mem::swap(&mut self.buf[index], &mut items[index]);
         }
-        let _ = std::mem::replace(&mut self.items, items);
+        let _ = std::mem::replace(&mut self.buf, items);
     }
 
     pub fn size(&self) -> usize {
@@ -33,10 +33,10 @@ impl<T> Stack<T> {
     }
 
     pub fn push(&mut self, item: T) {
-        if self.size == self.items.len() {
+        if self.size == self.buf.len() {
             self.grow();
         }
-        self.items[self.size] = item;
+        self.buf[self.size] = item;
         self.size += 1;
     }
 
@@ -46,14 +46,14 @@ impl<T> Stack<T> {
         }
         self.size -= 1;
         let null = unsafe { std::mem::MaybeUninit::<T>::uninit().assume_init() };
-        let item = std::mem::replace(&mut self.items[self.size], null);
+        let item = std::mem::replace(&mut self.buf[self.size], null);
         Some(item)
     }
 
     pub fn peek(&self) -> Option<&T> {
         match self.size {
             0 => None,
-            _ => Some(&self.items[self.size - 1]),
+            _ => Some(&self.buf[self.size - 1]),
         }
     }
 }
