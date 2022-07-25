@@ -6,7 +6,7 @@ pub struct Buffer<T> {
 }
 
 impl<T> Buffer<T> {
-    pub fn empty() -> Self {
+    pub fn new() -> Self {
         Self {
             cap: 0,
             ptr: std::ptr::NonNull::dangling(),
@@ -14,13 +14,13 @@ impl<T> Buffer<T> {
         }
     }
 
-    pub fn with_capacity(capacity: usize) -> Self {
-        let layout = std::alloc::Layout::array::<T>(capacity).unwrap();
+    pub fn with_capacity(size: usize) -> Self {
+        let layout = std::alloc::Layout::array::<T>(size).unwrap();
         let raw = unsafe { std::alloc::alloc(layout) as *mut T };
         let ptr = std::ptr::NonNull::new(raw).unwrap();
         Self {
             ptr,
-            cap: capacity,
+            cap: size,
             _marker: std::marker::PhantomData,
         }
     }
@@ -33,6 +33,7 @@ impl<T> Buffer<T> {
             self.cap = 4;
         } else {
             let layout = std::alloc::Layout::array::<T>(self.cap).unwrap();
+            assert!(layout.size() <= isize::MAX as usize, "allocation to large");
             let raw = unsafe {
                 std::alloc::realloc(self.ptr.as_ptr() as *mut u8, layout, layout.size() * 2)
                     as *mut T
@@ -56,11 +57,48 @@ impl<T> Drop for Buffer<T> {
     }
 }
 
+impl<T> std::ops::Deref for Buffer<T> {
+    type Target = [T];
+    fn deref(&self) -> &[T] {
+        unsafe { std::slice::from_raw_parts(self.ptr.as_ptr(), self.cap) }
+    }
+}
+
+impl<T> std::ops::DerefMut for Buffer<T> {
+    fn deref_mut(&mut self) -> &mut [T] {
+        unsafe { std::slice::from_raw_parts_mut(self.ptr.as_ptr(), self.cap) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn test_new() {
+        let buf = Buffer::<i32>::new();
+        assert_eq!(buf.len(), 0);
+    }
+
+    #[test]
+    fn test_with_capacity() {
+        let buf = Buffer::<i32>::with_capacity(4);
+        assert_eq!(buf.len(), 4);
+    }
+
+    #[test]
+    fn test_grow() {
+        let mut buf = Buffer::<i32>::new();
+        buf.grow();
+        assert_eq!(buf.len(), 4);
+        buf.grow();
+        assert_eq!(buf.len(), 8);
+    }
+
+    #[test]
+    fn test_deref() {
+        let mut buf = Buffer::<i32>::with_capacity(4);
+        buf[0] = 42;
+        assert_eq!(buf[0], 42);
     }
 }
