@@ -1,31 +1,17 @@
+use dsa_rs_buffer::Buffer;
+
 #[derive(Debug, PartialEq)]
 pub struct Stack<T> {
     size: usize,
-    buf: Box<[T]>,
+    buf: Buffer<T>,
 }
 
 impl<T> Stack<T> {
-    pub fn new(size: usize) -> Self {
-        assert_ne!(size, 0, "Stack requires a size of at least 1 element.");
+    pub fn new() -> Self {
         Self {
             size: 0,
-            buf: Self::alloc(size),
+            buf: Buffer::new(),
         }
-    }
-
-    fn alloc(size: usize) -> Box<[T]> {
-        let layout = std::alloc::Layout::array::<T>(size).unwrap();
-        let start = unsafe { std::alloc::alloc(layout) as *mut T };
-        let slice = std::ptr::slice_from_raw_parts_mut(start, size);
-        unsafe { Box::from_raw(slice) }
-    }
-
-    fn grow(&mut self) {
-        let mut items = Self::alloc(self.size * 2);
-        for index in 0..self.size {
-            std::mem::swap(&mut self.buf[index], &mut items[index]);
-        }
-        let _ = std::mem::replace(&mut self.buf, items);
     }
 
     pub fn size(&self) -> usize {
@@ -34,7 +20,7 @@ impl<T> Stack<T> {
 
     pub fn push(&mut self, item: T) {
         if self.size == self.buf.len() {
-            self.grow();
+            self.buf.grow();
         }
         self.buf[self.size] = item;
         self.size += 1;
@@ -64,14 +50,14 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    #[should_panic]
     fn test_new() {
-        let _ = Stack::<i32>::new(0);
+        let stack = Stack::<i32>::new();
+        assert_eq!(stack.size(), 0);
     }
 
     #[test]
     fn test_push() {
-        let mut stack = Stack::new(1);
+        let mut stack = Stack::new();
         stack.push(41);
         stack.push(42);
         stack.push(43);
@@ -82,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_pop() {
-        let mut stack = Stack::new(1);
+        let mut stack = Stack::new();
         assert_eq!(stack.size(), 0);
         assert_eq!(stack.pop(), None);
         stack.push(42);
@@ -93,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_peek() {
-        let mut stack = Stack::new(1);
+        let mut stack = Stack::new();
         assert_eq!(stack.peek(), None);
         stack.push(41);
         assert_eq!(stack.peek(), Some(&41));
