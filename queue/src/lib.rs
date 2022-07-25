@@ -1,77 +1,39 @@
+use dsa_rs_buffer::Buffer;
+
 #[derive(Debug, PartialEq)]
 pub struct Queue<T> {
-    next: usize,
-    last: usize,
+    head: usize,
+    tail: usize,
     size: usize,
-    buf: Box<[T]>,
+    data: Buffer<T>,
 }
 
 impl<T> Queue<T> {
-    pub fn new(size: usize) -> Self {
-        assert_ne!(size, 0, "Queue requires a size of at least 1 element.");
+    pub fn new() -> Self {
         Self {
-            next: 0,
-            last: 0,
             size: 0,
-            buf: Self::alloc(size),
+            head: 0,
+            tail: 0,
+            data: Buffer::new(),
         }
-    }
-
-    fn alloc(size: usize) -> Box<[T]> {
-        let layout = std::alloc::Layout::array::<T>(size).unwrap();
-        let start = unsafe { std::alloc::alloc(layout) as *mut T };
-        let slice = core::ptr::slice_from_raw_parts_mut(start, size);
-        unsafe { Box::from_raw(slice) }
-    }
-
-    fn grow(&mut self) {
-        let Self {
-            next,
-            last,
-            size,
-            buf: old_buf,
-            ..
-        } = self;
-        let mut new_buf = Self::alloc(*size * 2);
-        if last < next {
-            /*
-              0 1 2 3
-             |c|d|a|b|
-                ^ ^
-                | next
-                last
-
-             becomes...
-
-              0 1 2 3 4 5 6 7
-             |a|b|c|d| | | | |
-              ^     ^
-              next  last
-            */
-            let ranges = (*next..*size).chain(0..=*last);
-            for (new_index, old_index) in ranges.enumerate() {
-                std::mem::swap(&mut old_buf[old_index], &mut new_buf[new_index]);
-            }
-            self.next = 0;
-            self.last = *size - 1;
-        } else {
-            for index in *next..=*last {
-                std::mem::swap(&mut old_buf[index], &mut new_buf[index]);
-            }
-        };
-        let _ = std::mem::replace(&mut self.buf, new_buf);
     }
 
     pub fn size(&self) -> usize {
         self.size
     }
 
-    pub fn enqueue(&mut self, item: T) {
-        if self.size == self.buf.len() {
-            self.grow();
+    pub fn enqueue(&mut self, elem: T) {
+        if self.size == self.data.capacity() {
+            self.data.grow();
+            if self.size > 0 && self.tail == self.head {
+                for index in 0..self.tail {
+                    self.data.swap(index, index + self.size);
+                }
+                self.tail = self.tail + self.size;
+            }
         }
-        self.last = (self.last + 1) % self.buf.len();
-        self.buf[self.last] = item;
+        unsafe { self.data.write(self.tail, elem) };
+        self.tail = (self.tail + 1) % self.data.capacity();
         self.size += 1;
     }
 
@@ -79,18 +41,10 @@ impl<T> Queue<T> {
         if self.size == 0 {
             return None;
         }
-        let null = unsafe { std::mem::MaybeUninit::<T>::uninit().assume_init() };
-        let item = std::mem::replace(&mut self.buf[self.next], null);
-        self.next = (self.next + 1) % self.buf.len();
+        let elem = unsafe { self.data.read(self.head) };
+        self.head = (self.head + 1) % self.data.capacity();
         self.size -= 1;
-        Some(item)
-    }
-
-    pub fn peek(&self) -> Option<&T> {
-        match self.size {
-            0 => None,
-            _ => Some(&self.buf[self.next]),
-        }
+        Some(elem)
     }
 }
 
@@ -100,14 +54,14 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    #[should_panic]
     fn test_new() {
-        let _ = Queue::<i32>::new(0);
+        let queue = Queue::<i32>::new();
+        assert_eq!(queue.size(), 0);
     }
 
     #[test]
     fn test_enqueue() {
-        let mut queue = Queue::new(1);
+        let mut queue = Queue::new();
         queue.enqueue(41);
         queue.enqueue(42);
         queue.enqueue(43);
@@ -118,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_dequeue() {
-        let mut queue = Queue::new(1);
+        let mut queue = Queue::new();
         assert_eq!(queue.size(), 0);
         assert_eq!(queue.dequeue(), None);
         queue.enqueue(41);
@@ -132,19 +86,14 @@ mod tests {
         assert_eq!(queue.size(), 1);
         queue.enqueue(44);
         queue.enqueue(45);
+        queue.enqueue(46);
+        queue.enqueue(47);
+        println!("{:?}", queue);
         assert_eq!(queue.dequeue(), Some(43));
         assert_eq!(queue.dequeue(), Some(44));
-    }
-
-    #[test]
-    fn test_peek() {
-        let mut queue = Queue::new(1);
-        assert_eq!(queue.peek(), None);
-        queue.enqueue(41);
-        assert_eq!(queue.peek(), Some(&41));
-        queue.enqueue(42);
-        assert_eq!(queue.peek(), Some(&41));
-        queue.dequeue();
-        assert_eq!(queue.peek(), Some(&42));
+        assert_eq!(queue.dequeue(), Some(45));
+        assert_eq!(queue.dequeue(), Some(46));
+        assert_eq!(queue.dequeue(), Some(47));
+        assert_eq!(queue.dequeue(), None);
     }
 }

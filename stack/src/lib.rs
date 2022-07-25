@@ -3,14 +3,14 @@ use dsa_rs_buffer::Buffer;
 #[derive(Debug, PartialEq)]
 pub struct Stack<T> {
     size: usize,
-    buf: Buffer<T>,
+    data: Buffer<T>,
 }
 
 impl<T> Stack<T> {
     pub fn new() -> Self {
         Self {
             size: 0,
-            buf: Buffer::new(),
+            data: Buffer::new(),
         }
     }
 
@@ -18,11 +18,11 @@ impl<T> Stack<T> {
         self.size
     }
 
-    pub fn push(&mut self, item: T) {
-        if self.size == self.buf.len() {
-            self.buf.grow();
+    pub fn push(&mut self, elem: T) {
+        if self.size == self.data.capacity() {
+            self.data.grow();
         }
-        self.buf[self.size] = item;
+        unsafe { self.data.write(self.size, elem) };
         self.size += 1;
     }
 
@@ -31,16 +31,7 @@ impl<T> Stack<T> {
             return None;
         }
         self.size -= 1;
-        let null = unsafe { std::mem::MaybeUninit::<T>::uninit().assume_init() };
-        let item = std::mem::replace(&mut self.buf[self.size], null);
-        Some(item)
-    }
-
-    pub fn peek(&self) -> Option<&T> {
-        match self.size {
-            0 => None,
-            _ => Some(&self.buf[self.size - 1]),
-        }
+        Some(unsafe { self.data.read(self.size) })
     }
 }
 
@@ -75,17 +66,5 @@ mod tests {
         assert_eq!(stack.size(), 1);
         assert_eq!(stack.pop(), Some(42));
         assert_eq!(stack.size(), 0);
-    }
-
-    #[test]
-    fn test_peek() {
-        let mut stack = Stack::new();
-        assert_eq!(stack.peek(), None);
-        stack.push(41);
-        assert_eq!(stack.peek(), Some(&41));
-        stack.push(42);
-        assert_eq!(stack.peek(), Some(&42));
-        stack.pop();
-        assert_eq!(stack.peek(), Some(&41));
     }
 }

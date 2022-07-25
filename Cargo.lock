@@ -42,6 +42,7 @@ dependencies = [
 name = "dsa_rs_queue"
 version = "0.1.0"
 dependencies = [
+ "dsa_rs_buffer",
  "pretty_assertions",
 ]
 
