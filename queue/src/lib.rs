@@ -26,9 +26,7 @@ impl<T> Queue<T> {
         if self.size == self.data.capacity() {
             self.data.grow();
             if self.size > 0 && self.tail == self.head {
-                for index in 0..self.tail {
-                    self.data.swap(index, index + self.size);
-                }
+                self.data.copy(0, self.size, self.tail);
                 self.tail = self.tail + self.size;
             }
         }
@@ -88,7 +86,7 @@ mod tests {
         queue.enqueue(45);
         queue.enqueue(46);
         queue.enqueue(47);
-        println!("{:?}", queue);
+        assert_eq!(queue.size(), 5);
         assert_eq!(queue.dequeue(), Some(43));
         assert_eq!(queue.dequeue(), Some(44));
         assert_eq!(queue.dequeue(), Some(45));

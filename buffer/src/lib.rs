@@ -55,23 +55,24 @@ impl<T> Buffer<T> {
         self.ptr.as_ptr().add(index).write(elem);
     }
 
-    pub fn swap(&mut self, fst: usize, snd: usize) {
+    pub fn copy(&mut self, src: usize, dst: usize, len: usize) {
         assert!(
-            fst < self.cap,
-            "first index out of bounds: the capacity is {} but the index is {}",
+            src < self.cap,
+            "source index out of bounds: the capacity is {} but the index is {}",
             self.cap,
-            fst
+            src
         );
         assert!(
-            snd < self.cap,
-            "second index out of bounds: the capacity is {} but the index is {}",
+            dst + len < self.cap,
+            "destination index out of bounds: the capacity is {} but last index is {}",
             self.cap,
-            snd
+            dst + len
         );
         unsafe {
-            let fst_ptr = self.ptr.as_ptr().add(fst);
-            let snd_ptr = self.ptr.as_ptr().add(snd);
-            std::ptr::swap(fst_ptr, snd_ptr);
+            self.ptr
+                .as_ptr()
+                .add(src)
+                .copy_to_nonoverlapping(self.ptr.as_ptr().add(dst), len);
         }
     }
 }
