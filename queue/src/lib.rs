@@ -53,7 +53,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let queue = Queue::<i32>::new();
+        let queue = Queue::<()>::new();
         assert_eq!(queue.size(), 0);
     }
 

@@ -1,3 +1,5 @@
+use std::iter::FusedIterator;
+
 #[derive(Debug, PartialEq)]
 struct Node<T> {
     data: T,
@@ -64,6 +66,10 @@ impl<T> LinkedList<T> {
         }
         self.head = prev;
     }
+
+    pub fn iter(&self) -> LinkedListIter<'_, T> {
+        LinkedListIter(&self.head)
+    }
 }
 
 impl<T, const N: usize> From<[T; N]> for LinkedList<T> {
@@ -76,7 +82,36 @@ impl<T, const N: usize> From<[T; N]> for LinkedList<T> {
     }
 }
 
-pub struct LinkedListIter<'a, T>(Option<&'a Box<Node<T>>>);
+pub struct LinkedListIterator<T>(Option<Box<Node<T>>>);
+
+impl<T> FusedIterator for LinkedListIterator<T> {}
+
+impl<T> Iterator for LinkedListIterator<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.take() {
+            None => None,
+            Some(node) => {
+                self.0 = node.next;
+                Some(node.data)
+            }
+        }
+    }
+}
+
+impl<T> IntoIterator for LinkedList<T> {
+    type Item = T;
+    type IntoIter = LinkedListIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LinkedListIterator(self.head)
+    }
+}
+
+pub struct LinkedListIter<'a, T>(&'a Option<Box<Node<T>>>);
+
+impl<'a, T> FusedIterator for LinkedListIter<'a, T> {}
 
 impl<'a, T> Iterator for LinkedListIter<'a, T> {
     type Item = &'a T;
@@ -85,7 +120,7 @@ impl<'a, T> Iterator for LinkedListIter<'a, T> {
         match self.0 {
             None => None,
             Some(node) => {
-                self.0 = node.next.as_ref();
+                self.0 = &node.next;
                 Some(&node.data)
             }
         }
@@ -94,11 +129,10 @@ impl<'a, T> Iterator for LinkedListIter<'a, T> {
 
 impl<'a, T> IntoIterator for &'a LinkedList<T> {
     type Item = &'a T;
-
     type IntoIter = LinkedListIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        LinkedListIter(self.head.as_ref())
+        LinkedListIter(&self.head)
     }
 }
 
@@ -109,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let empty: LinkedList<i32> = LinkedList::new(None);
+        let empty: LinkedList<()> = LinkedList::new(None);
         assert_eq!(empty, LinkedList::from([]));
         let non_empty = LinkedList::new(Some(42));
         assert_eq!(non_empty, LinkedList::from([42]));
@@ -155,5 +189,19 @@ mod tests {
         let mut list = LinkedList::from([1, 2, 3, 4, 5]);
         list.reverse();
         assert_eq!(list, LinkedList::from([5, 4, 3, 2, 1]))
+    }
+
+    #[test]
+    fn test_iter() {
+        let list = LinkedList::from([1, 2, 3, 4, 5]);
+        let vec = list.iter().collect::<Vec<_>>();
+        assert_eq!(vec, vec![&1, &2, &3, &4, &5]);
+    }
+
+    #[test]
+    fn test_into_iter() {
+        let list = LinkedList::from([1, 2, 3, 4, 5]);
+        let vec = list.into_iter().collect::<Vec<_>>();
+        assert_eq!(vec, vec![1, 2, 3, 4, 5]);
     }
 }

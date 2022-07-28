@@ -96,19 +96,19 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let buf = Buffer::<i32>::new();
+        let buf = Buffer::<()>::new();
         assert_eq!(buf.capacity(), 0);
     }
 
     #[test]
     fn test_with_capacity() {
-        let buf = Buffer::<i32>::with_capacity(4);
+        let buf = Buffer::<()>::with_capacity(4);
         assert_eq!(buf.capacity(), 4);
     }
 
     #[test]
     fn test_grow() {
-        let mut buf = Buffer::<i32>::new();
+        let mut buf = Buffer::<()>::new();
         buf.grow();
         assert_eq!(buf.capacity(), 4);
         buf.grow();

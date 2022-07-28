@@ -42,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let stack = Stack::<i32>::new();
+        let stack = Stack::<()>::new();
         assert_eq!(stack.size(), 0);
     }
 
